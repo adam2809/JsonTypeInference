@@ -9,11 +9,13 @@ class DataClassCreator(private val root:JsonNode, private val topLevelClassName:
 
     val dataClassList = mutableListOf<DataClass>()
 
+    var arrayTypeNameIndex = 0
+
     val jsonTypeToActionMapping = mapOf(
         JsonNodeType.STRING to ::resolveString,
         JsonNodeType.BOOLEAN to ::resolveBool,
         JsonNodeType.NUMBER to ::resolveIntOrDouble,
-        JsonNodeType.ARRAY to ::resolveArrayType,
+        JsonNodeType.ARRAY to ::handleArrayJsonType,
         JsonNodeType.OBJECT to ::addObjectJsonNode
     )
 
@@ -22,7 +24,12 @@ class DataClassCreator(private val root:JsonNode, private val topLevelClassName:
     }
 
     private fun makeDataClass() {
-        addObjectJsonNode(mapOf(topLevelClassName to root).entries.first(),-1)
+        if(root.nodeType != JsonNodeType.OBJECT){
+            dataClassList.add(DataClass(topLevelClassName, mutableListOf()))
+        }
+
+        val dummyEntry = mapOf("topLevel" to root).entries.first()
+        jsonTypeToActionMapping[root.nodeType]?.invoke(dummyEntry,dataClassList.size-1)
     }
 
     private fun addObjectJsonNode(node:Map.Entry<String,JsonNode>,index:Int){
@@ -46,8 +53,17 @@ class DataClassCreator(private val root:JsonNode, private val topLevelClassName:
         addPropertyToDataClass(index,numType,num.key)
     }
 
-    private fun resolveArrayType(arr:Map.Entry<String,JsonNode>,index:Int){
+    private fun handleArrayJsonType(arr:Map.Entry<String,JsonNode>, index:Int){
+        addPropertyToDataClass(index,handleArrayJsonType(arr.value),arr.key)
+    }
 
+    private fun handleArrayJsonType(arr:JsonNode):String{
+        when(arr.first().nodeType){
+            JsonNodeType.STRING -> return "List<String>"
+            JsonNodeType.NUMBER -> return "List<${if(arr.first().toPrettyString().contains(".")) "Double" else "Int"}>"
+            JsonNodeType.BOOLEAN -> return "List<Boolean>"
+        }
+        return "List<Any>"
     }
 
     private fun resolveBool(bool:Map.Entry<String,JsonNode>,index:Int){
