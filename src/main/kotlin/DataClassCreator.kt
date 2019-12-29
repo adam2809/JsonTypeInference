@@ -4,12 +4,13 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.io.File
 import java.lang.StringBuilder
 
-class DataClassCreator(private val root:JsonNode, private val topLevelClassName: String){
-    constructor(sourceFile:File,topLevelClassName: String):this(jacksonObjectMapper().readTree(sourceFile),topLevelClassName)
+class DataClassCreator(private val sourceFile:File,private val topLevelClassName: String){
 
     val dataClassList = mutableListOf<DataClass>()
 
     var arrayTypeNameIndex = 0
+
+    val root = getRootFromFile()
 
     val jsonTypeToActionMapping = mapOf(
         JsonNodeType.STRING to ::resolveString,
@@ -18,6 +19,10 @@ class DataClassCreator(private val root:JsonNode, private val topLevelClassName:
         JsonNodeType.ARRAY to ::handleArrayJsonType,
         JsonNodeType.OBJECT to ::addObjectJsonNode
     )
+
+    private fun getRootFromFile():JsonNode{
+        return jacksonObjectMapper().readTree(sourceFile)
+    }
 
     init {
         makeDataClass()
