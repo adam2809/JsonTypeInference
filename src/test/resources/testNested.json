@@ -1,0 +1,10 @@
+{
+    "name": "Adam",
+    "surname": "Kulesza",
+    "id": 1,
+    "nested": {"inanest": true,"level":1},
+    "visable": true,
+    "money": 100.22,
+    "fryty": ["jedna fryta","druga fryta","trzecia fryta"],
+    "nestednestednested": {"num": 1,"nestednested": {"iuy": 1,"dsa": 2}}
+}
