@@ -4,31 +4,30 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.io.File
 import java.lang.StringBuilder
 
-class DataClassCreator(private val sourceFile:File,private val topLevelClassName: String){
+class DataClassCreator(sourceFile:File,private val topLevelClassName: String){
+    constructor(sourceFile:File):this(sourceFile,"DataClass0")
 
-    val dataClassList = mutableListOf<DataClass>()
+    private val dataClassList = mutableListOf<DataClass>()
 
-    var arrayTypeNameIndex = 0
+    private val root = jacksonObjectMapper().readTree(sourceFile)
 
-    val root = getRootFromFile()
-
-    val jsonTypeToActionMapping = mapOf(
-        JsonNodeType.STRING to ::resolveString,
-        JsonNodeType.BOOLEAN to ::resolveBool,
-        JsonNodeType.NUMBER to ::resolveIntOrDouble,
-        JsonNodeType.ARRAY to ::handleArrayJsonType,
+    private val jsonTypeToActionMapping = mapOf(
+        JsonNodeType.STRING to fun(str:Map.Entry<String,JsonNode>,index:Int){
+            addPropertyToDataClass(index,"String",str.key)
+        },
+        JsonNodeType.BOOLEAN to fun(entry:Map.Entry<String,JsonNode>,i:Int){
+            addPropertyToDataClass(i,"Boolean",entry.key)
+        },
+        JsonNodeType.NUMBER to fun(num:Map.Entry<String,JsonNode>,index:Int){
+            addPropertyToDataClass(index,resolveJsonNumberType(num.value),num.key)
+        },
+        JsonNodeType.ARRAY to fun(arr:Map.Entry<String,JsonNode>, index:Int){
+            addPropertyToDataClass(index,resolveJsonArrayType(arr.value),arr.key)
+        },
         JsonNodeType.OBJECT to ::addObjectJsonNode
     )
 
-    private fun getRootFromFile():JsonNode{
-        return jacksonObjectMapper().readTree(sourceFile)
-    }
-
     init {
-        makeDataClass()
-    }
-
-    private fun makeDataClass() {
         if(root.nodeType != JsonNodeType.OBJECT){
             dataClassList.add(DataClass(topLevelClassName, mutableListOf()))
         }
@@ -51,32 +50,19 @@ class DataClassCreator(private val sourceFile:File,private val topLevelClassName
         }
     }
 
-    private fun resolveIntOrDouble(num:Map.Entry<String,JsonNode>,index:Int){
-        val numStr = num.value.toPrettyString()
-
-        val numType = if (numStr.contains(".")) "Double" else "Int"
-        addPropertyToDataClass(index,numType,num.key)
+    private fun resolveJsonNumberType(num:JsonNode):String{
+        return if(num.toPrettyString().contains(".")) "Double" else "Int"
     }
 
-    private fun handleArrayJsonType(arr:Map.Entry<String,JsonNode>, index:Int){
-        addPropertyToDataClass(index,handleArrayJsonType(arr.value),arr.key)
-    }
-
-    private fun handleArrayJsonType(arr:JsonNode):String{
-        when(arr.first().nodeType){
-            JsonNodeType.STRING -> return "List<String>"
-            JsonNodeType.NUMBER -> return "List<${if(arr.first().toPrettyString().contains(".")) "Double" else "Int"}>"
-            JsonNodeType.BOOLEAN -> return "List<Boolean>"
+    private fun resolveJsonArrayType(arr:JsonNode):String{
+        with(arr.first()) {
+            return when(this.nodeType) {
+                JsonNodeType.STRING -> "List<String>"
+                JsonNodeType.NUMBER -> "List<${resolveJsonArrayType(this)}>"
+                JsonNodeType.BOOLEAN -> "List<Boolean>"
+                else -> "List<Any>"
+            }
         }
-        return "List<Any>"
-    }
-
-    private fun resolveBool(bool:Map.Entry<String,JsonNode>,index:Int){
-        addPropertyToDataClass(index,"Boolean",bool.key)
-    }
-
-    private fun resolveString(str:Map.Entry<String,JsonNode>,index:Int){
-        addPropertyToDataClass(index,"String",str.key)
     }
 
     private fun addPropertyToDataClass(index:Int,type:String,name:String){
