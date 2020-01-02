@@ -1,7 +1,7 @@
 [
   {
-    "source": "/home/adam/code/test.json",
-    "dest": "/home/adam/Test.kt",
+    "source": "/home/username/Documents/test.json",
+    "dest": "/home/username/Test.kt",
     "className": "Test"
   }
 ]
