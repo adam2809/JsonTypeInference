@@ -5,8 +5,7 @@ import java.io.File
 fun main(){
     val config = jacksonObjectMapper().readValue<List<Config>>(File("${System.getProperty("user.dir")}/src/main/resources/config.json"))
     config.forEach {
-        val creator = DataClassCreator(File(it.source),it.className)
-        File(it.dest).writeText(creator.toString())
+        JsonReaderFileCreator(File(it.source),File(it.dest))
     }
 }
 

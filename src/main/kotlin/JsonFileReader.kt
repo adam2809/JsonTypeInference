@@ -4,13 +4,14 @@ class JsonReaderFileCreator(sourceFile:File,destFile:File){
     val dataClassCreator = DataClassCreator(sourceFile, sourceFile.nameWithoutExtension)
 
     companion object{
-        private final val READ_FUNCTION_TEMPLATE =
+        private val READ_FUNCTION_TEMPLATE =
 """
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import java.io.File
 
 fun getFromFile():%s{
-    return jacksonObjectMapper().readValue(File(%s))
+    return jacksonObjectMapper().readValue(File("%s"))
 }
 
 """
