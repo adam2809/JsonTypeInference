@@ -1,7 +1,7 @@
 [
   {
-    "source": "/home/adam/code/JsonTypeInference/src/test/resources/testNested.json",
-    "dest": "/home/adam/code/JsonTypeInference/src/main/kotlin/TEssda.kt",
+    "source": "/home/adam/code/myProject/testNested.json",
+    "dest": "/home/adam/Test.kt",
     "className": "Test"
   }
 ]
